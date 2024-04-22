@@ -1,0 +1,10 @@
+.custom-navbar {
+    height: 60px; /* Ajusta este valor a tu gusto */
+  }
+  .nav-link-custom {
+    color: #fff !important; /* Hace el texto más blanco */
+    font-size: 1.2rem; /* Hace el texto un poco más grande */
+  }
+  .nav-link-custom:hover {
+    color: hsl(0, 8%, 76%) !important; /* Cambia el color del texto al pasar el mouse por encima */
+  }

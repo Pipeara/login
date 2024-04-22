@@ -1,6 +1,6 @@
-export const URLBASE = 'http://localhost:3000'
+export const BASE_URL = 'http://localhost:3000';
 
 export const ENDPOINT = {
-  login: `${URLBASE}/login`,
-  users: `${URLBASE}/users`
-}
+  login: `${BASE_URL}/login`,
+  users: `${BASE_URL}/users`
+};

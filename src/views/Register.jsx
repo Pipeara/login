@@ -1,39 +1,74 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ENDPOINT } from '../config/constans';
 
+import './Register.css';
+
 const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+const rutRegex = /^\d{7,8}-[0-9kK]{1}$/;
 const initialForm = {
-  name: '',
-  lastname: '',
+  first_name: '',
+  last_name: '',
   email: '',
   rut: '',
+  rutDv: '',
+  address: '',
+  gender: '',
+  birthdate:'',
   password: '',
   confirmPassword: '',
-  direction: '',
-  discapacidad: false,
-  descripcion_discapacidad: ''
+  disability: '',
+  disability_description: '',
+  nationality: '',
 };
 
 const Register = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(initialForm);
-  const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [passwordMismatch, setPasswordMismatch] = useState(false); // Añadido aquí
+  const dvRef = useRef();
 
-  const handleUser = (event) => setUser({ ...user, [event.target.name]: event.target.value });
+  useEffect(() => {
+    if (window.sessionStorage.getItem('token')) {
+      navigate('/perfil');
+    }
+  }, []);
+
+  const handleUser = (event) => {
+    setUser({ ...user, [event.target.name]: event.target.value });
+    if (event.target.name === 'rut' && event.target.value.length >= 8) {
+      dvRef.current.focus();
+    }
+    if (event.target.name === 'password' || event.target.name === 'confirmPassword') {
+      setPasswordMismatch(user.password !== user.confirmPassword);
+    }
+  };
+
+  const handleDisabilityChange = (event) => {
+    setUser({ ...user, disability: event.target.checked });
+  };
+
+  const handleDescriptionChange = (event) => {
+    if (user.disability) {
+      setUser({ ...user, disability_description: event.target.value });
+    }
+  };
 
   const handleForm = async (event) => {
     event.preventDefault();
 
     // Validación de campos
     if (
-      !user.name.trim() ||
-      !user.lastname.trim() ||
+      !user.first_name.trim() ||
+      !user.last_name.trim() ||
       !user.email.trim() ||
       !user.rut.trim() ||
+      !user.rutDv.trim() ||
       !user.password.trim() ||
-      !user.direction.trim() ||
-      !user.confirmPassword.trim()
+      !user.confirmPassword.trim() ||
+      !user.address.trim() ||
+      !user.birthdate.trim() ||
+      !user.nationality.trim()
     ) {
       return window.alert('Todos los campos son obligatorios.');
     }
@@ -42,61 +77,66 @@ const Register = () => {
       return window.alert('El formato del email no es correcto!');
     }
 
+    const rut = user.rut + '-' + user.rutDv;
+    if (!rutRegex.test(rut)) {
+      return window.alert('El formato del RUT no es correcto!');
+    }
+
     if (user.password !== user.confirmPassword) {
-      setPasswordMismatch(true);
-      return;
+      return window.alert('Las contraseñas no coinciden.');
     }
 
     console.log('Enviando datos al backend...');
 
+    // Unir rut y rutDv antes de enviar al backend
+    const userToSend = { ...user, rut: rut };
+    delete userToSend.confirmPassword;
     try {
-      const response = await fetch('http://localhost:3000/users', {
+      const response = await fetch(ENDPOINT.users, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(user)
+        body: JSON.stringify(userToSend)
       });
-
+    
+      console.log(response); // Aquí está el console.log
+    
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error);
       }
-
+    
       window.alert('Usuario registrado con éxito 😀.');
       navigate('/login');
     } catch (error) {
       console.error(error.message);
       window.alert(`${error.message} 🙁.`);
     }
-  };
 
-  useEffect(() => {
-    if (window.sessionStorage.getItem('token')) {
-      navigate('/perfil');
-    }
-  }, []);
+    
 
   return (
-    <form onSubmit={handleForm} className='form-container mt-5'>
+    <form onSubmit={handleForm} className='form-container mt-5' style={{ borderRadius: '10px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.15)', position: 'relative', width: '40%', height: '50%', margin: 'auto' }}>
+      <img src="/public/dint.png" alt="Logo" style={{ position: 'absolute', top: '10px', left: '10px', height: '50px' }} />
       <h1>Registrar nuevo usuario</h1>
       <hr />
       <div className='form-group mt-3'>
         <input
-          value={user.name}
+          value={user.first_name}
           onChange={handleUser}
           type='text'
-          name='name'
+          name='first_name'
           className='form-control mb-3'
           placeholder='Nombre'
         />
       </div>
       <div className='form-group mt-3'>
         <input
-          value={user.lastname}
+          value={user.last_name}
           onChange={handleUser}
           type='text'
-          name='lastname'
+          name='last_name'
           className='form-control mb-3'
           placeholder='Apellido'
         />
@@ -108,17 +148,43 @@ const Register = () => {
           type='email'
           name='email'
           className='form-control mb-3'
-          placeholder='Correo electrónico'
+          placeholder='Email'
         />
       </div>
       <div className='form-group'>
+  <select
+    value={user.nationality}
+    onChange={handleUser}
+    name='nationality'
+    className='form-control mb-3'
+  >
+    <option value=''>Selecciona Nacionalidad</option>
+    <option value='Nacional'>Nacional</option>
+    <option value='Extranjero'>Extranjero</option>
+  </select>
+</div>
+
+
+      <div className='form-group d-flex'>
         <input
           value={user.rut}
           onChange={handleUser}
           type='text'
           name='rut'
-          className='form-control mb-3'
+          className='form-control mb-3 mr-2'
           placeholder='RUT'
+          style={{ width: '150px' }} 
+        />
+        <input
+          ref={dvRef}
+          value={user.rutDv}
+          onChange={handleUser}
+          type='text'
+          name='rutDv'
+          className='form-control mb-3'
+          placeholder='DV'
+          maxLength='1'
+          style={{ width: '50px' }} 
         />
       </div>
       <div className='form-group'>
@@ -137,47 +203,61 @@ const Register = () => {
           onChange={handleUser}
           type='password'
           name='confirmPassword'
-          className={`form-control mb-3 ${passwordMismatch ? 'is-invalid' : ''}`}
+          className='form-control mb-3'
           placeholder='Confirmar Contraseña'
         />
-        {passwordMismatch && <div className="invalid-feedback">Las contraseñas no coinciden</div>}
       </div>
       <div className='form-group'>
         <input
-          value={user.direction}
+          value={user.address}
           onChange={handleUser}
           type='text'
-          name='direction'
+          name='address'
           className='form-control mb-3'
           placeholder='Dirección'
         />
       </div>
       <div className='form-group'>
         <input
-          type='checkbox'
-          name='discapacidad'
-          checked={user.discapacidad}
-          onChange={(event) => setUser({ ...user, discapacidad: event.target.checked })}
+          value={user.birthdate}
+          onChange={handleUser}
+          type='date'
+          name='birthdate'
+          className='form-control mb-3'
+          placeholder='Fecha de Nacimiento'
         />
-        <label htmlFor='discapacidad' className='ml-2'>¿Tiene alguna discapacidad?</label>
       </div>
-      {user.discapacidad && (
+      <div className='form-check'>
+        <input
+          className='form-check-input'
+          type='checkbox'
+          text='Discapacidad'
+          name='disability'
+          checked={user.disability}
+          onChange={handleDisabilityChange}
+          id='disability'
+        />
+        <label className='form-check-label' htmlFor='disability'>
+          Tiene Alguna Discapacidad
+        </label>
+      </div>
+      {user.disability && (
         <div className='form-group'>
           <input
-            value={user.descripcion_discapacidad}
-            onChange={handleUser}
+            value={user.disability_description}
+            onChange={handleDescriptionChange}
             type='text'
-            name='descripcion_discapacidad'
+            name='disability_description'
             className='form-control mb-3'
             placeholder='Descripción de la discapacidad'
           />
         </div>
       )}
-      <button type='submit' className='btn btn-light mt-3'>
-        Registrarme
+      <button type='submit' className='btn btn-primary'>
+        Registrar
       </button>
     </form>
   );
 };
-
+}
 export default Register;

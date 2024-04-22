@@ -1,46 +1,51 @@
-import { useContext } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import Context from '../contexts/Context'
+import React, { useContext,  } from 'react';
+import { Navbar, Container, Nav, Button, NavDropdown } from 'react-bootstrap';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import Context from '../contexts/Context';
+import dint from '../../public/dint.png'; 
+import './Navigation.css'
 
 const Navigation = () => {
-  const navigate = useNavigate()
-  const { getDeveloper, setDeveloper } = useContext(Context)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { getDeveloper, setDeveloper } = useContext(Context);
 
   const logout = () => {
-    setDeveloper()
-    window.sessionStorage.removeItem('token')
-    navigate('/')
-  }
-
-  const isLogin = () => {
-    if (!getDeveloper) {
-      return (
-        <>
-          <Link to='/registrarse' className='btn m-1 register-btn'>Registrarse</Link>
-          <Link to='/login' className='btn login-btn'>Iniciar Sesión</Link>
-        </>
-      )
-    }
-
-    return (
-      <>
-        <Link to='/perfil' className='btn m-1 btn-light'>Mi Perfil</Link>
-        <button onClick={logout} className='btn btn-danger'>Salir</button>
-      </>
-    )
-  }
+    setDeveloper(null);
+    window.sessionStorage.removeItem('token');
+    navigate('/');
+  };
 
   return (
-    <nav className='navbar'>
-      <span className='logo'>Dint</span>
-      <div className='opciones'>
-        <span className='me-3'>
-          <Link to='/'>Inicio<i className='fa-solid fa-house ms-2' /></Link>
-        </span>
-        {isLogin()}
-      </div>
-    </nav>
-  )
-}
+    <Navbar collapseOnSelect expand="lg" variant="dark" className="custom-navbar" style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)' }}>
+      <Container>
+        <Navbar.Brand href="/">
+          <img
+            src={dint}
+            height="75"
+            className="d-inline-block align-top"
+            alt="Logo"
+          />
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+        <Navbar.Collapse id="responsive-navbar-nav">
 
-export default Navigation
+        <Nav className="mx-auto">
+      <Link to='/home' className='nav-link nav-link-custom'>Home</Link>
+      <Link to='/about' className='nav-link nav-link-custom'>About</Link>
+        <Link to='/admin' className='nav-link nav-link-custom'>Admin</Link>
+        </Nav>
+         
+          {!getDeveloper && (
+            <Nav className="ml-auto">
+              <Link to='/registrarse' className='btn  register-btn'>Registrarse</Link>
+              <Link to='/login' className='btn login-btn'>Iniciar Sesión</Link>
+            </Nav>
+          )}
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+};
+
+export default Navigation;

@@ -1,73 +1,75 @@
+// Login.js
 import React, { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import { ENDPOINT } from '../config/constans';
 const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 const Login = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ email: '', password: '' });
-  
+
   const handleUser = (event) => setUser({ ...user, [event.target.name]: event.target.value });
 
   const handleForm = async (event) => {
     event.preventDefault();
 
     if (!user.email.trim() || !user.password.trim()) {
-      return window.alert('Email y contraseña son obligatorios.');
+      return window.alert('Email and password are required.');
     }
 
     if (!emailRegex.test(user.email)) {
-      return window.alert('El formato del email no es correcto!');
+      return window.alert('Invalid email format!');
     }
-
     try {
-      const response = await fetch('http://localhost:3000/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(user)
-      });
-
-      if (!response.ok) {
-        throw new Error('Error en la solicitud de inicio de sesión');
-      }
-
-      // Si el inicio de sesión es exitoso, redireccionar al perfil
-      navigate('/perfil');
+      const { data } = await axios.post(ENDPOINT.login, user);
+    
+      // Guarda el token y el correo electrónico del usuario en el almacenamiento de sesión
+      window.sessionStorage.setItem('token', data.token);
+      window.sessionStorage.setItem('email', user.email);
+    
+      window.alert('Usuario identificado con éxito 😀.');
+      navigate('/profile');
     } catch (error) {
       console.error(error);
-      window.alert('Ha ocurrido un error durante el inicio de sesión. Por favor, intenta nuevamente.');
+      window.alert('No registrado. Por favor, regístrate.');
     }
-  };
+  }; // Aquí está la llave de cierre correcta
 
   return (
-    <form onSubmit={handleForm} className='col-10 col-sm-6 col-md-3 m-auto mt-5'>
-      <h1>Iniciar Sesión</h1>
-      <hr />
-      <div className='form-group mt-1'>
-        <input
-          value={user.email}
-          onChange={handleUser}
-          type='email'
-          name='email'
-          className='form-control'
-          placeholder='Enter email'
-        />
+    <div className="card col-12 col-sm-8 col-md-6 m-auto mt-5">
+      <div className="card-body" style={{ boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)', borderRadius: '10px' }}>
+        <img src="/public/dint.png" alt="Logo" style={{ position: 'absolute', top: '10px', left: '10px', height: '50px' }} />
+        <form onSubmit={handleForm} style={{ padding: '20px' }}>
+          <h1>Login</h1>
+          <hr />
+          <div className="form-group mt-1">
+            <input
+              value={user.email}
+              onChange={handleUser}
+              type="email"
+              name="email"
+              className="form-control"
+              placeholder="Enter email"
+            />
+          </div>
+          <div className="form-group mt-1">
+            <input
+              value={user.password}
+              onChange={handleUser}
+              type="password"
+              name="password"
+              className="form-control"
+              placeholder="Password"
+            />
+          </div>
+          <button type="submit" className="btn btn-light mt-3">
+            LogIn
+          </button>
+        </form>
       </div>
-      <div className='form-group mt-1'>
-        <input
-          value={user.password}
-          onChange={handleUser}
-          type='password'
-          name='password'
-          className='form-control'
-          placeholder='Password'
-        />
-      </div>
-      <button type='submit' className='btn btn-light mt-3'>Iniciar Sesión</button>
-    </form>
+    </div>
   );
-};
+}
 
 export default Login;
